@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MANIFEST — Kunjungan Sales</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --paper:#F6F3EC;
+    --paper-2:#EFEADC;
+    --ink:#1B2430;
+    --ink-2:#4A5568;
+    --ink-3:#8A8477;
+    --accent:#E28B3B;
+    --accent-dark:#B96A22;
+    --rust:#B5443A;
+    --line:#DCD4C0;
+    --line-dark:#C7BCA0;
+    --ok:#3C8B62;
+    --warn:#B8862A;
+    --bad:#B5443A;
+    --surface:#FFFFFF;
+    --shadow: 0 1px 2px rgba(27,36,48,0.06), 0 4px 14px rgba(27,36,48,0.05);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',system-ui,-apple-system,Segoe UI,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .mono{font-family:'IBM Plex Mono',ui-monospace,Consolas,monospace;}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 24px 80px;}
+
+  /* ---- Header ---- */
+  .topbar{
+    display:flex;align-items:flex-end;justify-content:space-between;
+    gap:20px;flex-wrap:wrap;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:16px;margin-bottom:22px;
+  }
+  .brand-eyebrow{
+    font-family:'IBM Plex Mono';font-size:11px;letter-spacing:.18em;
+    color:var(--accent-dark);text-transform:uppercase;margin:0 0 4px;
+  }
+  .brand-title{
+    font-family:'Space Grotesk';font-weight:700;font-size:30px;
+    letter-spacing:-0.01em;margin:0;color:var(--ink);
+  }
+  .brand-sub{margin:6px 0 0;color:var(--ink-2);font-size:13.5px;}
+  .topbar-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .btn{
+    font-family:'Inter';font-weight:600;font-size:13.5px;
+    border:1.5px solid var(--ink);background:var(--surface);
+    color:var(--ink);padding:10px 16px;border-radius:3px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:8px;
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:hover{transform:translateY(-1px);box-shadow:var(--shadow);}
+  .btn-primary{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .btn-primary:hover{background:#0F1622;}
+  .btn-accent{background:var(--accent);border-color:var(--accent-dark);color:#241300;}
+  #fileInput{display:none;}
+  .status-pill{
+    font-family:'IBM Plex Mono';font-size:11.5px;color:var(--ink-2);
+    background:var(--paper-2);border:1px solid var(--line-dark);
+    padding:6px 10px;border-radius:999px;
+  }
+  .status-pill.err{color:#7A2419;background:#F6DFDA;border-color:#E3B2A6;}
+
+  /* ---- Summary strip ---- */
+  .summary{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    background:var(--surface);border:1px solid var(--line-dark);
+    border-radius:4px;margin-bottom:22px;overflow:hidden;box-shadow:var(--shadow);
+  }
+  .stat{padding:18px 20px;border-right:1px solid var(--line);}
+  .stat:last-child{border-right:none;}
+  .stat-label{
+    font-family:'IBM Plex Mono';font-size:10.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-3);margin:0 0 8px;
+  }
+  .stat-value{font-family:'Space Grotesk';font-weight:700;font-size:26px;color:var(--ink);}
+  .stat-value small{font-family:'IBM Plex Mono';font-weight:500;font-size:13px;color:var(--ink-2);margin-left:4px;}
+
+  /* ---- Filters ---- */
+  .filters{
+    background:var(--paper-2);border:1px solid var(--line-dark);
+    border-radius:4px;padding:16px 18px;margin-bottom:20px;
+    display:grid;grid-template-columns:1.1fr 1.3fr 1.1fr 1fr 1fr auto;gap:14px;align-items:end;
+  }
+  .field label{
+    display:block;font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--ink-3);margin-bottom:6px;
+  }
+  .field select, .field input[type=text], .field input[type=date]{
+    width:100%;padding:9px 10px;border:1.5px solid var(--line-dark);
+    border-radius:3px;background:var(--surface);font-family:'Inter';font-size:13.5px;color:var(--ink);
+  }
+  .field select:focus, .field input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .toggle-row{display:flex;align-items:center;gap:8px;white-space:nowrap;padding-bottom:9px;}
+  .toggle-row input{width:16px;height:16px;accent-color:var(--accent-dark);}
+  .toggle-row label{font-size:12.5px;color:var(--ink-2);font-family:'Inter';}
+  .reset-link{
+    grid-column:1/-1;text-align:right;font-size:12px;color:var(--accent-dark);
+    cursor:pointer;text-decoration:underline;text-underline-offset:2px;background:none;border:none;
+    font-family:'Inter';padding:0;
+  }
+
+  /* ---- View tabs ---- */
+  .view-tabs{display:flex;gap:6px;margin-bottom:0;}
+  .tab-btn{
+    font-family:'IBM Plex Mono';font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;
+    padding:10px 18px;border:1.5px solid var(--line-dark);background:var(--paper-2);color:var(--ink-2);
+    border-radius:4px 4px 0 0;cursor:pointer;border-bottom:none;position:relative;top:1px;font-weight:600;
+  }
+  .tab-btn.active{background:var(--surface);color:var(--ink);border-color:var(--line-dark);box-shadow:0 -2px 0 var(--accent) inset;}
+  .tab-btn:not(.active):hover{background:var(--surface);}
+
+  /* ---- Pivot table ---- */
+  .pivot-builder{
+    background:var(--paper-2);border:1px solid var(--line-dark);border-top:none;
+    border-radius:0 0 4px 4px;padding:16px 18px;margin-bottom:16px;
+    display:grid;grid-template-columns:230px 1fr;gap:16px;
+  }
+  .pivot-fieldlist{
+    background:var(--surface);border:1px solid var(--line-dark);border-radius:4px;padding:10px;
+    display:flex;flex-direction:column;
+  }
+  .pivot-fieldlist-title{
+    font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);
+    margin-bottom:6px;
+  }
+  .pivot-fieldlist input[type=text]{
+    width:100%;padding:6px 8px;border:1.5px solid var(--line-dark);border-radius:3px;
+    font-family:'Inter';font-size:12px;margin-bottom:8px;background:var(--paper);
+  }
+  .pivot-fieldlist-items{overflow-y:auto;max-height:260px;flex:1;}
+  .pivot-field-item{
+    display:flex;align-items:center;gap:7px;padding:5px 6px;border-radius:3px;cursor:grab;
+    font-family:'Inter';font-size:12.5px;color:var(--ink);user-select:none;
+  }
+  .pivot-field-item:hover{background:var(--paper-2);}
+  .pivot-field-item.dragging{opacity:.4;}
+  .pivot-field-item input{width:14px;height:14px;accent-color:var(--accent-dark);pointer-events:none;}
+  .pivot-field-item .fnum{margin-left:auto;font-family:'IBM Plex Mono';font-size:9px;color:var(--ink-3);}
+  .pivot-zones-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;grid-template-rows:auto auto;}
+  .pivot-zone{
+    background:var(--surface);border:1.5px dashed var(--line-dark);border-radius:4px;padding:10px;min-height:78px;
+    transition:border-color .12s ease, background .12s ease;
+  }
+  .pivot-zone.dragover{border-color:var(--accent-dark);background:#FBF3E7;border-style:solid;}
+  .pivot-zone-head{
+    display:flex;align-items:center;gap:6px;margin-bottom:8px;
+    font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);
+  }
+  .pivot-zone-head .zicon{font-size:12px;}
+  .pivot-chips{display:flex;gap:6px;flex-wrap:wrap;min-height:26px;}
+  .pivot-chip-empty{color:var(--ink-3);font-size:11.5px;font-family:'Inter';font-style:italic;}
+  .pivot-chip{
+    display:inline-flex;align-items:center;gap:4px;background:var(--paper-2);border:1.5px solid var(--line-dark);
+    border-radius:4px;padding:5px 6px 5px 10px;font-family:'Inter';font-size:12px;color:var(--ink);cursor:grab;
+  }
+  .pivot-chip.dragging{opacity:.4;}
+  .pivot-chip .chip-label{font-weight:600;}
+  .pivot-chip select{
+    border:1px solid var(--line-dark);background:var(--surface);border-radius:3px;font-family:'IBM Plex Mono';font-size:10.5px;
+    padding:3px 4px;color:var(--ink-2);
+  }
+  .pivot-chip button{
+    border:none;background:none;color:var(--ink-3);width:16px;height:16px;border-radius:50%;
+    cursor:pointer;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;
+  }
+  .pivot-chip button:hover{background:var(--line-dark);color:var(--ink);}
+  .pivot-chip button.chip-filter{font-size:10px;}
+  .pivot-chip button.chip-filter.active{color:var(--accent-dark);background:#F5DFC2;}
+  .pivot-zone-foot{display:flex;gap:16px;margin-top:10px;grid-column:1/-1;}
+  .pivot-wrap{background:var(--surface);border:1px solid var(--line-dark);border-radius:4px;box-shadow:var(--shadow);overflow:auto;max-height:640px;}
+  table.pivot-table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono';font-size:12.5px;white-space:nowrap;}
+  table.pivot-table th, table.pivot-table td{padding:8px 14px;text-align:right;border-bottom:1px solid var(--line);}
+  table.pivot-table thead th{
+    background:var(--ink);color:var(--paper);text-align:right;font-size:10px;letter-spacing:.05em;
+    text-transform:uppercase;position:sticky;top:0;z-index:2;
+  }
+  table.pivot-table th:first-child, table.pivot-table td:first-child{
+    text-align:left;position:sticky;left:0;background:var(--surface);z-index:1;
+  }
+  table.pivot-table thead th:first-child{background:var(--ink);color:var(--paper);z-index:3;}
+  table.pivot-table tbody tr:hover td{background:var(--paper-2);}
+  table.pivot-table tbody tr:hover td:first-child{background:var(--paper-2);}
+  table.pivot-table tr.total-row td{font-weight:700;border-top:1.5px solid var(--line-dark);background:#F2EEE1;}
+  table.pivot-table tr.total-row td:first-child{background:#F2EEE1;}
+  table.pivot-table tr.grand-total-row td{font-weight:700;border-top:2px solid var(--ink);background:var(--paper-2);}
+  table.pivot-table tr.grand-total-row td:first-child{background:var(--paper-2);}
+  table.pivot-table tr.leaf-row td:first-child{color:var(--ink-2);font-weight:400;}
+  table.pivot-table td.rowtotal, table.pivot-table th.rowtotal{color:var(--accent-dark);font-weight:700;}
+  .pivot-toggle{
+    display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;
+    border:1.2px solid var(--line-dark);border-radius:2px;margin-right:6px;cursor:pointer;
+    font-size:10px;line-height:1;color:var(--ink-2);background:var(--paper-2);vertical-align:middle;
+  }
+  .pivot-toggle:hover{border-color:var(--accent-dark);color:var(--accent-dark);}
+  .pivot-note{padding:10px 16px;font-size:11.5px;color:var(--ink-3);font-family:'IBM Plex Mono';border-top:1px solid var(--line);background:var(--surface);}
+  .pivot-note button{margin-left:8px;font-family:'Inter';font-size:11px;color:var(--accent-dark);background:none;border:none;text-decoration:underline;cursor:pointer;padding:0;}
+
+  /* ---- Field value filter popover ---- */
+  .field-popover{
+    position:absolute;z-index:80;background:var(--surface);border:1.5px solid var(--line-dark);
+    border-radius:6px;box-shadow:0 12px 30px rgba(0,0,0,.22);padding:10px;width:230px;display:none;
+  }
+  .field-popover.show{display:block;}
+  .field-popover input[type=text]{
+    width:100%;padding:6px 8px;border:1.5px solid var(--line-dark);border-radius:3px;font-family:'Inter';
+    font-size:12px;margin-bottom:6px;
+  }
+  .field-popover .fp-actions{display:flex;justify-content:space-between;margin-bottom:6px;}
+  .field-popover .fp-actions button{
+    background:none;border:none;color:var(--accent-dark);font-size:11px;text-decoration:underline;cursor:pointer;padding:0;
+    font-family:'Inter';
+  }
+  .field-popover .fp-list{max-height:220px;overflow-y:auto;border-top:1px solid var(--line);padding-top:6px;}
+  .field-popover .fp-item{display:flex;align-items:center;gap:7px;padding:3px 2px;font-size:12px;font-family:'Inter';}
+  .field-popover .fp-item input{width:14px;height:14px;accent-color:var(--accent-dark);}
+  .field-popover .fp-close{
+    display:block;width:100%;margin-top:8px;padding:6px;background:var(--ink);color:var(--paper);border:none;
+    border-radius:3px;cursor:pointer;font-family:'Inter';font-size:12px;font-weight:600;
+  }
+
+  /* ---- Table (manifest sheet) ---- */
+  .sheet{
+    background:var(--surface);border:1px solid var(--line-dark);border-radius:4px;overflow:hidden;box-shadow:var(--shadow);
+  }
+  .sheet-head{
+    display:grid;grid-template-columns:96px 1.4fr 1.6fr 1fr 90px 110px 130px 40px;
+    background:var(--ink);color:var(--paper);
+    font-family:'IBM Plex Mono';font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+    padding:11px 16px;gap:8px;
+  }
+  .sheet-head .sortable{cursor:pointer;user-select:none;display:flex;align-items:center;gap:3px;transition:color .1s ease;}
+  .sheet-head div[style*="text-align:right"].sortable{justify-content:flex-end;}
+  .sheet-head .sortable:hover{color:var(--accent);}
+  .sheet-head .sortable.active{color:var(--accent);}
+  .sort-arrow{font-size:9px;line-height:1;opacity:0;}
+  .sortable.active .sort-arrow{opacity:1;}
+  .visit-row{
+    display:grid;grid-template-columns:96px 1.4fr 1.6fr 1fr 90px 110px 130px 40px;
+    padding:13px 16px;gap:8px;align-items:center;
+    border-bottom:1px solid var(--line);cursor:pointer;
+    transition:background .1s ease;
+  }
+  .visit-row:hover{background:var(--paper-2);}
+  .visit-row:last-child{border-bottom:none;}
+  .visit-row .col-date{font-family:'IBM Plex Mono';font-size:12.5px;color:var(--ink-2);}
+  .visit-row .col-sales{font-weight:600;font-size:13.5px;}
+  .visit-row .col-toko{font-size:13.5px;color:var(--ink);}
+  .visit-row .col-toko span{display:block;font-family:'IBM Plex Mono';font-size:11px;color:var(--ink-3);}
+  .visit-row .col-supp{font-size:12px;color:var(--ink-2);}
+  .visit-row .col-num{font-family:'IBM Plex Mono';font-size:13px;text-align:right;}
+  .visit-row .col-omzet{font-family:'IBM Plex Mono';font-size:13px;text-align:right;font-weight:600;}
+  .caret{color:var(--ink-3);text-align:center;transition:transform .15s ease;font-size:13px;}
+  .caret.open{transform:rotate(90deg);color:var(--accent-dark);}
+
+  .stamp{
+    display:inline-block;font-family:'IBM Plex Mono';font-weight:600;font-size:9.5px;
+    letter-spacing:.06em;padding:3px 7px;border:1.4px solid currentColor;border-radius:2px;
+    transform:rotate(-2deg);
+  }
+  .stamp.ok{color:var(--ok);}
+  .stamp.batal{color:var(--bad);}
+  .stamp.retur{color:var(--warn);}
+  .stamp.coret{color:var(--ink-3);}
+
+  .detail-panel{
+    background:var(--paper-2);border-bottom:1px solid var(--line);padding:14px 16px 16px 112px;
+  }
+  .detail-item{
+    display:flex;align-items:baseline;gap:6px;padding:6px 0;
+    border-bottom:1px dotted var(--line-dark);font-size:12.5px;
+  }
+  .detail-item:last-child{border-bottom:none;}
+  .detail-item .diname{color:var(--ink);}
+  .detail-item .disupp{font-family:'IBM Plex Mono';font-size:10.5px;color:var(--ink-3);margin-left:6px;}
+  .detail-item .difill{flex:1;border-bottom:1px dotted var(--line-dark);margin:0 4px 3px;}
+  .detail-item .diqty{font-family:'IBM Plex Mono';font-size:11.5px;color:var(--ink-2);white-space:nowrap;}
+  .detail-item .diamt{font-family:'IBM Plex Mono';font-size:12.5px;font-weight:600;white-space:nowrap;min-width:96px;text-align:right;}
+  .detail-item .distat{margin-left:8px;}
+
+  .empty-state{padding:60px 20px;text-align:center;color:var(--ink-3);}
+  .empty-state .big{font-family:'Space Grotesk';font-size:19px;color:var(--ink-2);margin-bottom:8px;font-weight:600;}
+
+  .pager{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-top:1px solid var(--line);}
+  .pager span{font-family:'IBM Plex Mono';font-size:12px;color:var(--ink-2);}
+  .pager .btn{padding:7px 12px;font-size:12.5px;}
+  .pager .btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
+
+  /* ---- Upload modal ---- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(20,24,32,0.55);display:none;
+    align-items:center;justify-content:center;z-index:50;padding:20px;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal{
+    background:var(--surface);border-radius:6px;max-width:480px;width:100%;
+    padding:26px 26px 22px;box-shadow:0 20px 60px rgba(0,0,0,.3);
+  }
+  .modal h3{font-family:'Space Grotesk';margin:0 0 6px;font-size:19px;}
+  .modal p{color:var(--ink-2);font-size:13.5px;margin:0 0 16px;}
+  .drop-zone{
+    border:2px dashed var(--line-dark);border-radius:6px;padding:30px 16px;
+    text-align:center;color:var(--ink-2);font-size:13.5px;cursor:pointer;margin-bottom:16px;
+    transition:border-color .12s ease, background .12s ease;
+  }
+  .drop-zone:hover, .drop-zone.drag{border-color:var(--accent-dark);background:var(--paper-2);}
+  .drop-zone strong{color:var(--ink);}
+  .progress-wrap{margin-bottom:14px;}
+  .progress-bar{height:8px;background:var(--paper-2);border-radius:99px;overflow:hidden;border:1px solid var(--line-dark);}
+  .progress-fill{height:100%;background:var(--accent);width:0%;transition:width .2s ease;}
+  .progress-text{font-family:'IBM Plex Mono';font-size:11.5px;color:var(--ink-2);margin-top:6px;}
+  .result-list{max-height:160px;overflow-y:auto;font-family:'IBM Plex Mono';font-size:12px;color:var(--ink-2);
+    background:var(--paper-2);border:1px solid var(--line);border-radius:4px;padding:10px 12px;margin-bottom:14px;}
+  .result-list div{padding:2px 0;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;}
+
+  @media (max-width:900px){
+    .filters{grid-template-columns:1fr 1fr;}
+    .summary{grid-template-columns:1fr 1fr;}
+    .sheet-head{display:none;}
+    .visit-row{grid-template-columns:1fr;gap:4px;padding:14px 16px;}
+    .visit-row .col-num, .visit-row .col-omzet{text-align:left;}
+    .visit-row .caret{position:absolute;right:16px;}
+    .visit-row{position:relative;}
+    .detail-panel{padding:12px 14px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div>
+      <p class="brand-eyebrow">Distribusi Snack &amp; Grocery — Rekap Internal</p>
+      <h1 class="brand-title">MANIFEST — Kunjungan Sales</h1>
+      <p class="brand-sub" id="lastUpdated">Menghubungkan ke database...</p>
+    </div>
+    <div class="topbar-actions">
+      <span class="status-pill" id="dataRangePill">0 hari data</span>
+      <button class="btn btn-accent" id="openUploadBtn">⭱ Upload Data Hari Ini</button>
+    </div>
+  </div>
+
+  <div class="summary">
+    <div class="stat">
+      <p class="stat-label">Total Kunjungan</p>
+      <div class="stat-value" id="statVisits">0</div>
+    </div>
+    <div class="stat">
+      <p class="stat-label">Toko Unik Dikunjungi</p>
+      <div class="stat-value" id="statStores">0</div>
+    </div>
+    <div class="stat">
+      <p class="stat-label">Sales Aktif</p>
+      <div class="stat-value" id="statSales">0</div>
+    </div>
+    <div class="stat">
+      <p class="stat-label">Total Omzet</p>
+      <div class="stat-value" id="statOmzet">Rp 0</div>
+    </div>
+  </div>
+
+  <div class="filters">
+    <div class="field">
+      <label for="fSales">Nama Sales</label>
+      <select id="fSales"><option value="">Semua Sales</option></select>
+    </div>
+    <div class="field">
+      <label for="fToko">Nama Toko</label>
+      <input type="text" id="fToko" placeholder="Cari nama toko...">
+    </div>
+    <div class="field">
+      <label for="fSupplier">Supplier</label>
+      <select id="fSupplier"><option value="">Semua Supplier</option></select>
+    </div>
+    <div class="field">
+      <label>Dari Tanggal</label>
+      <input type="date" id="fFrom">
+    </div>
+    <div class="field">
+      <label>Sampai Tanggal</label>
+      <input type="date" id="fTo">
+    </div>
+    <div class="toggle-row">
+      <input type="checkbox" id="fHideVoid">
+      <label for="fHideVoid">Sembunyikan BATAL / CORET / RETUR</label>
+    </div>
+    <button class="reset-link" id="resetFilters">Reset semua filter</button>
+  </div>
+
+  <div class="view-tabs">
+    <button class="tab-btn active" id="tabVisits" data-tab="visits">📋 Tabel Kunjungan</button>
+    <button class="tab-btn" id="tabPivot" data-tab="pivot">📊 Pivot Table</button>
+  </div>
+
+  <div id="visitsView">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div class="sortable" data-col="tanggal">Tanggal<span class="sort-arrow" data-arrow="tanggal"></span></div>
+      <div class="sortable" data-col="sales">Sales<span class="sort-arrow" data-arrow="sales"></span></div>
+      <div class="sortable" data-col="toko">Toko<span class="sort-arrow" data-arrow="toko"></span></div>
+      <div class="sortable" data-col="supplier">Supplier Disentuh<span class="sort-arrow" data-arrow="supplier"></span></div>
+      <div class="sortable" style="text-align:right" data-col="item">Item<span class="sort-arrow" data-arrow="item"></span></div>
+      <div class="sortable" style="text-align:right" data-col="qty">Qty<span class="sort-arrow" data-arrow="qty"></span></div>
+      <div class="sortable" style="text-align:right" data-col="omzet">Omzet<span class="sort-arrow" data-arrow="omzet"></span></div>
+      <div></div>
+    </div>
+    <div id="visitList"></div>
+    <div class="pager" id="pager" style="display:none;">
+      <span id="pagerInfo"></span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" id="prevPage">← Sebelumnya</button>
+        <button class="btn" id="nextPage">Berikutnya →</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <div id="pivotView" style="display:none;">
+    <div class="pivot-builder">
+      <div class="pivot-fieldlist">
+        <div class="pivot-fieldlist-title">Field List</div>
+        <input type="text" id="pFieldSearch" placeholder="Cari field...">
+        <div class="pivot-fieldlist-items" id="pFieldListItems"></div>
+      </div>
+      <div>
+        <div class="pivot-zones-grid">
+          <div class="pivot-zone" id="zoneFilters" data-zone="filters">
+            <div class="pivot-zone-head"><span class="zicon">▽</span> Filters</div>
+            <div class="pivot-chips" id="pFilterChips"></div>
+          </div>
+          <div class="pivot-zone" id="zoneCols" data-zone="cols">
+            <div class="pivot-zone-head"><span class="zicon">⬍</span> Kolom</div>
+            <div class="pivot-chips" id="pColChips"></div>
+          </div>
+          <div class="pivot-zone" id="zoneRows" data-zone="rows">
+            <div class="pivot-zone-head"><span class="zicon">☰</span> Baris</div>
+            <div class="pivot-chips" id="pRowChips"></div>
+          </div>
+          <div class="pivot-zone" id="zoneValues" data-zone="values">
+            <div class="pivot-zone-head"><span class="zicon">Σ</span> Nilai</div>
+            <div class="pivot-chips" id="pValChips"></div>
+          </div>
+          <div class="pivot-zone-foot">
+            <button class="reset-link" id="pAddCountBtn">+ Tambah "Jumlah Baris"</button>
+            <button class="reset-link" id="pExpandAll">Expand semua</button>
+            <button class="reset-link" id="pCollapseAll">Collapse semua</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pivot-wrap">
+      <div id="pivotTableContainer"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="field-popover" id="fieldPopover">
+  <input type="text" id="fpSearch" placeholder="Cari nilai...">
+  <div class="fp-actions">
+    <button id="fpSelectAll">Pilih Semua</button>
+    <button id="fpSelectNone">Hapus Semua</button>
+  </div>
+  <div class="fp-list" id="fpList"></div>
+  <button class="fp-close" id="fpClose">Terapkan</button>
+</div>
+
+
+
+<!-- Upload Modal -->
+<div class="modal-overlay" id="uploadOverlay">
+  <div class="modal">
+    <h3>Upload Data Kunjungan</h3>
+    <p>Pilih file Excel (.xlsx) hasil export harian. Data pada tanggal yang sama akan ditimpa; tanggal baru akan ditambahkan.</p>
+    <div class="drop-zone" id="dropZone">
+      <strong>Klik untuk pilih file</strong> atau tarik &amp; lepas di sini<br>
+      <span id="fileNameLabel"></span>
+    </div>
+    <input type="file" id="fileInput" accept=".xlsx,.xls">
+    <div class="progress-wrap" id="progressWrap" style="display:none;">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-text" id="progressText">Membaca file...</div>
+    </div>
+    <div class="result-list" id="resultList" style="display:none;"></div>
+    <div class="modal-actions" style="justify-content:space-between;">
+      <button class="btn" id="resetAllBtn" style="color:#B5443A;border-color:#B5443A;font-size:11.5px;padding:8px 10px;">⚠ Reset Total (Hapus Semua Data)</button>
+      <div style="display:flex;gap:10px;">
+        <button class="btn" id="retryFailedBtn" style="display:none;">↻ Coba Lagi (yang Gagal)</button>
+        <button class="btn" id="cancelUploadBtn">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Supabase config ----------
+  var SUPABASE_URL = "https://imwqvkakmijczdkbiolt.supabase.co";
+  var SUPABASE_KEY = "sb_publishable_afQdwSRtuR4LSTkuHW9Pyg_E_dcdOWc";
+  var TABLE = "visit_rows";
+
+  // ---------- Column mapping (Excel header -> app field, app field -> DB column) ----------
+  var HEADER_MAP = {
+    "NO. ENTRI":"noEntri", "TANGGAL":"tanggal", "KODE SUPPLIER":"kodeSupplier",
+    "NAMA SUPPLIER":"namaSupplier", "KD. KAT":"kdKat", "KODE BRG":"kodeBrg",
+    "NAMA BARANG":"namaBarang", "HARGA":"harga", "QTY":"qty", "BONUS":"bonus",
+    "SATUAN":"satuan", "DISC1":"disc1", "DISC2":"disc2", "DISC. RP":"discRp",
+    "SUB TOTAL":"subTotal", "INSENTIF (%)":"insentifPersen", "INSENTIF (RP.)":"insentifRp",
+    "JML. KECIL":"jmlKecil", "KD CUST":"kdCust", "NAMA CUSTOMER":"namaCustomer",
+    "TELP1":"telp1", "KD SALES":"kdSales", "NAMA SALES":"namaSales", "USER":"userName",
+    "JENIS BYR":"jenisByr", "KODE PENGIRIM":"kodePengirim", "NAMA PENGIRIM":"namaPengirim",
+    "STATUS":"status"
+  };
+  var DB_FIELD_PAIRS = [
+    ["noEntri","no_entri"], ["kodeSupplier","kode_supplier"], ["namaSupplier","nama_supplier"],
+    ["kdKat","kd_kat"], ["kodeBrg","kode_brg"], ["namaBarang","nama_barang"], ["harga","harga"],
+    ["qty","qty"], ["bonus","bonus"], ["satuan","satuan"], ["disc1","disc1"], ["disc2","disc2"],
+    ["discRp","disc_rp"], ["subTotal","sub_total"], ["insentifPersen","insentif_persen"],
+    ["insentifRp","insentif_rp"], ["jmlKecil","jml_kecil"], ["kdCust","kd_cust"],
+    ["namaCustomer","nama_customer"], ["telp1","telp1"], ["kdSales","kd_sales"],
+    ["namaSales","nama_sales"], ["userName","user_name"], ["jenisByr","jenis_byr"],
+    ["kodePengirim","kode_pengirim"], ["namaPengirim","nama_pengirim"], ["status","status"]
+  ];
+  var VOID_STATUSES = {"BATAL":1,"CORET":1,"RETUR":1};
+  var INSERT_BATCH_SIZE = 1000;
+
+  // ---------- Pivot table config ----------
+  // Master field list — every column, drag-and-droppable like Excel's field list.
+  var FIELD_META = {
+    tanggalKey:      { label:"Tanggal",         numeric:false },
+    noEntri:         { label:"No. Entri",       numeric:false },
+    kodeSupplier:    { label:"Kode Supplier",   numeric:false },
+    namaSupplier:    { label:"Nama Supplier",   numeric:false },
+    kdKat:           { label:"Kode Kategori",   numeric:false },
+    kodeBrg:         { label:"Kode Barang",     numeric:false },
+    namaBarang:      { label:"Nama Barang",     numeric:false },
+    harga:           { label:"Harga",           numeric:true, currency:true },
+    qty:             { label:"Qty",             numeric:true },
+    bonus:           { label:"Bonus",           numeric:true },
+    satuan:          { label:"Satuan",          numeric:false },
+    disc1:           { label:"Disc1",           numeric:true },
+    disc2:           { label:"Disc2",           numeric:true },
+    discRp:          { label:"Disc Rp",         numeric:true, currency:true },
+    subTotal:        { label:"Sub Total",       numeric:true, currency:true },
+    insentifPersen:  { label:"Insentif (%)",    numeric:true },
+    insentifRp:      { label:"Insentif (Rp)",   numeric:true, currency:true },
+    jmlKecil:        { label:"Jml Kecil",       numeric:true },
+    kdCust:          { label:"Kode Customer",   numeric:false },
+    namaCustomer:    { label:"Nama Customer",   numeric:false },
+    telp1:           { label:"Telp",            numeric:false },
+    kdSales:         { label:"Kode Sales",      numeric:false },
+    namaSales:       { label:"Nama Sales",      numeric:false },
+    userName:        { label:"User",            numeric:false },
+    jenisByr:        { label:"Jenis Bayar",     numeric:false },
+    kodePengirim:    { label:"Kode Pengirim",   numeric:false },
+    namaPengirim:    { label:"Nama Pengirim",   numeric:false },
+    status:          { label:"Status",          numeric:false }
+  };
+  var FIELD_ORDER = ["tanggalKey","noEntri","kodeSupplier","namaSupplier","kdKat","kodeBrg","namaBarang",
+    "harga","qty","bonus","satuan","disc1","disc2","discRp","subTotal","insentifPersen","insentifRp","jmlKecil",
+    "kdCust","namaCustomer","telp1","kdSales","namaSales","userName","jenisByr","kodePengirim","namaPengirim","status"];
+  var PIVOT_AGG_OPTIONS = [
+    { key:"sum",   label:"Sum" },
+    { key:"avg",   label:"Rata-rata" },
+    { key:"count", label:"Count" },
+    { key:"countunique", label:"Count Unique" },
+    { key:"min",   label:"Min" },
+    { key:"max",   label:"Max" }
+  ];
+  var PIVOT_MAX_COLS = 12;
+  var PIVOT_MAX_CHILDREN = 500;      // safety cap on children rendered per node
+  function fieldIsNumeric(field){ return !!(FIELD_META[field] && FIELD_META[field].numeric); }
+  function fieldLabel(field){ return field === "__count__" ? "Jumlah Baris" : ((FIELD_META[field]||{}).label || field); }
+  // Multi-field pivot state. filterFields/rowFields/colFields are ORDERED arrays of
+  // { field, selected } — selected is null (= all values) or an array of allowed value-labels.
+  // values is an ordered array of { field, agg } — each becomes its own column(s).
+  var pivotState = {
+    filterFields: [],
+    rowFields: [{ field:"namaSales", selected:null }],
+    colFields: [],
+    values: [{ field:"subTotal", agg:"sum" }],
+    collapsedPaths: {},   // pathKey -> true, where pathKey = row values joined by "\u241F"
+    autoCollapsedApplied: false,
+    dirty: true
+  };
+  var PATH_SEP = "\u241F";
+  var activePopoverField = null; // field currently shown in the value-filter popover
+
+  // ---------- State ----------
+  var state = {
+    allRows: [],
+    visits: [],
+    filtered: [],
+    page: 0,
+    pageSize: 40,
+    openKeys: {},
+    sortCol: "tanggal",
+    sortDir: "desc",
+    activeTab: "visits"
+  };
+  var SORT_COLUMNS = {
+    tanggal:  { key:"tanggalKey",     type:"string", defaultDir:"desc" },
+    sales:    { key:"namaSales",      type:"string", defaultDir:"asc"  },
+    toko:     { key:"namaCustomer",   type:"string", defaultDir:"asc"  },
+    supplier: { key:"supplierLabel",  type:"string", defaultDir:"asc"  },
+    item:     { key:"itemCount",      type:"number", defaultDir:"desc" },
+    qty:      { key:"totalQty",       type:"number", defaultDir:"desc" },
+    omzet:    { key:"totalOmzet",     type:"number", defaultDir:"desc" }
+  };
+  function sortVisits(list){
+    var col = SORT_COLUMNS[state.sortCol] || SORT_COLUMNS.tanggal;
+    var dir = state.sortDir === "asc" ? 1 : -1;
+    return list.slice().sort(function(a,b){
+      var av = a[col.key], bv = b[col.key];
+      if(col.type === "number"){
+        av = av||0; bv = bv||0;
+        return (av - bv) * dir;
+      }
+      av = (av||"").toString().toLowerCase();
+      bv = (bv||"").toString().toLowerCase();
+      if(av < bv) return -1 * dir;
+      if(av > bv) return 1 * dir;
+      return 0;
+    });
+  }
+  function updateSortHeaderUI(){
+    document.querySelectorAll(".sheet-head .sortable").forEach(function(el){
+      var col = el.getAttribute("data-col");
+      var arrow = el.querySelector(".sort-arrow");
+      if(col === state.sortCol){
+        el.classList.add("active");
+        arrow.textContent = state.sortDir === "asc" ? "▲" : "▼";
+      } else {
+        el.classList.remove("active");
+        arrow.textContent = "▼";
+      }
+    });
+  }
+
+  // ---------- Helpers ----------
+  function fmtIDR(n){
+    n = Math.round(n||0);
+    return "Rp " + n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  }
+  function toDateKey(d){
+    if(!(d instanceof Date) || isNaN(d)) return null;
+    var y=d.getUTCFullYear(), m=("0"+(d.getUTCMonth()+1)).slice(-2), day=("0"+d.getUTCDate()).slice(-2);
+    return y+"-"+m+"-"+day;
+  }
+  function fmtDateDisplay(key){
+    if(!key) return "-";
+    var p = key.split("-");
+    var bulan = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+    return p[2] + " " + bulan[parseInt(p[1],10)-1] + " " + p[0];
+  }
+  function normHeader(h){ return String(h||"").trim().toUpperCase(); }
+  function safeNum(v){ var n = parseFloat(v); return isNaN(n) ? 0 : n; }
+  function delay(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
+  function withRetry(fn, attempts){
+    attempts = attempts || 3;
+    function attempt(n){
+      return fn().catch(function(err){
+        if(n >= attempts) throw err;
+        return delay(500 * n).then(function(){ return attempt(n+1); });
+      });
+    }
+    return attempt(1);
+  }
+  function escapeHtml(s){
+    return String(s==null?"":s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  // ---------- Supabase REST helpers ----------
+  function sbHeaders(extra){
+    var h = { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY };
+    if(extra) Object.keys(extra).forEach(function(k){ h[k] = extra[k]; });
+    return h;
+  }
+  function sbCheck(res){
+    if(res.ok) return res;
+    return res.text().then(function(t){
+      throw new Error("HTTP " + res.status + ": " + t.slice(0,200));
+    });
+  }
+  // Wraps fetch() so a network-level failure (DNS down, project paused/sleeping,
+  // no internet, CORS block) gets turned into a message that actually explains
+  // what to check, instead of the browser's generic "Failed to fetch".
+  function sbFetch(url, opts){
+    return fetch(url, opts).catch(function(err){
+      var msg = (err && err.message) || String(err);
+      if(/failed to fetch|networkerror|load failed/i.test(msg)){
+        throw new Error("Tidak bisa terhubung ke database Supabase. Kemungkinan besar project Supabase sedang PAUSED/tidur (biasa terjadi di plan gratis kalau lama tidak dipakai) — buka dashboard supabase.com, cek status project, klik Restore kalau paused, tunggu 1-2 menit, lalu coba lagi. (Detail teknis: " + msg + ")");
+      }
+      throw err;
+    });
+  }
+  function checkConnection(){
+    return sbFetch(SUPABASE_URL + "/rest/v1/" + TABLE + "?select=id&limit=1", { headers: sbHeaders() }).then(sbCheck);
+  }
+  function appRowToDb(row){
+    var out = { tanggal_key: row.tanggalKey };
+    DB_FIELD_PAIRS.forEach(function(pair){
+      var v = row[pair[0]];
+      out[pair[1]] = (v === undefined) ? null : v;
+    });
+    return out;
+  }
+  function dbRowToApp(row){
+    var out = { tanggalKey: row.tanggal_key };
+    DB_FIELD_PAIRS.forEach(function(pair){
+      out[pair[0]] = row[pair[1]];
+    });
+    return out;
+  }
+  function sbSelectAll(onProgress){
+    var pageSize = 1000;
+    var all = [];
+    function fetchPage(offset){
+      return sbFetch(SUPABASE_URL + "/rest/v1/" + TABLE + "?select=*&order=tanggal_key.asc", {
+        headers: sbHeaders({ "Range-Unit":"items", "Range": offset + "-" + (offset+pageSize-1) })
+      }).then(sbCheck).then(function(res){ return res.json(); }).then(function(rows){
+        all = all.concat(rows);
+        if(onProgress) onProgress(all.length);
+        if(rows.length === pageSize){ return fetchPage(offset+pageSize); }
+        return all;
+      });
+    }
+    return fetchPage(0);
+  }
+  function sbDeleteByDate(dateKey){
+    return withRetry(function(){
+      return sbFetch(SUPABASE_URL + "/rest/v1/" + TABLE + "?tanggal_key=eq." + dateKey, {
+        method: "DELETE", headers: sbHeaders({ "Prefer":"return=minimal" })
+      }).then(sbCheck);
+    });
+  }
+  function sbInsertBatch(rows){
+    return withRetry(function(){
+      return sbFetch(SUPABASE_URL + "/rest/v1/" + TABLE, {
+        method: "POST",
+        headers: sbHeaders({ "Content-Type":"application/json", "Prefer":"return=minimal" }),
+        body: JSON.stringify(rows)
+      }).then(sbCheck);
+    });
+  }
+  function sbDeleteAll(){
+    return withRetry(function(){
+      return sbFetch(SUPABASE_URL + "/rest/v1/" + TABLE + "?id=gt.0", {
+        method: "DELETE", headers: sbHeaders({ "Prefer":"return=minimal" })
+      }).then(sbCheck);
+    });
+  }
+
+  // ---------- Load all data ----------
+  function loadAll(){
+    document.getElementById("lastUpdated").textContent = "Memuat data dari database...";
+    return sbSelectAll(function(count){
+      document.getElementById("lastUpdated").textContent = "Memuat data dari database... (" + count.toLocaleString("id-ID") + " baris)";
+    }).then(function(dbRows){
+      state.allRows = dbRows.map(dbRowToApp);
+      buildVisits();
+      populateFilterOptions();
+      updateDataRangePill();
+      applyFilters();
+    }).catch(function(err){
+      var pill = document.getElementById("dataRangePill");
+      pill.textContent = "Gagal terhubung ke database";
+      pill.classList.add("err");
+      document.getElementById("lastUpdated").textContent = "Error: " + (err && err.message ? err.message : err);
+    });
+  }
+
+  function updateDataRangePill(){
+    var keys = {};
+    state.allRows.forEach(function(r){ if(r.tanggalKey) keys[r.tanggalKey]=1; });
+    var sorted = Object.keys(keys).sort();
+    var pill = document.getElementById("dataRangePill");
+    var upd = document.getElementById("lastUpdated");
+    pill.classList.remove("err");
+    if(sorted.length === 0){
+      pill.textContent = "0 hari data";
+      upd.textContent = "Belum ada data. Upload file harian untuk mulai.";
+      return;
+    }
+    pill.textContent = sorted.length + " hari data (" + fmtDateDisplay(sorted[0]) + " – " + fmtDateDisplay(sorted[sorted.length-1]) + ")";
+    upd.textContent = "Tersambung ke database Supabase. Terakhir dibuka: " + new Date().toLocaleString("id-ID");
+  }
+
+  // ---------- Aggregation: rows -> visits ----------
+  function buildVisits(){
+    var map = {};
+    state.allRows.forEach(function(r){
+      var dk = r.tanggalKey;
+      var key = dk + "|" + (r.kdSales||r.namaSales) + "|" + (r.kdCust||r.namaCustomer);
+      if(!map[key]){
+        map[key] = {
+          key:key, tanggalKey:dk, namaSales:r.namaSales, kdSales:r.kdSales,
+          namaCustomer:r.namaCustomer, kdCust:r.kdCust,
+          items:[], suppliers:{}, totalQty:0, totalOmzet:0, itemCount:0, hasVoid:false
+        };
+      }
+      var v = map[key];
+      v.items.push(r);
+      v.suppliers[r.namaSupplier||"—"] = 1;
+      v.itemCount += 1;
+      v.totalQty += safeNum(r.qty);
+      v.totalOmzet += safeNum(r.subTotal);
+      if(VOID_STATUSES[r.status]){ v.hasVoid = true; }
+    });
+    var visits = Object.keys(map).map(function(k){ return map[k]; });
+    visits.forEach(function(v){
+      v.supplierLabel = Object.keys(v.suppliers).sort().join(", ");
+    });
+    visits.sort(function(a,b){ return a.tanggalKey < b.tanggalKey ? 1 : (a.tanggalKey > b.tanggalKey ? -1 : 0); });
+    state.visits = visits;
+  }
+
+  function populateFilterOptions(){
+    var salesSet = {}, suppSet = {};
+    state.allRows.forEach(function(r){
+      if(r.namaSales) salesSet[r.namaSales]=1;
+      if(r.namaSupplier) suppSet[r.namaSupplier]=1;
+    });
+    fillSelect("fSales", Object.keys(salesSet).sort(), "Semua Sales");
+    fillSelect("fSupplier", Object.keys(suppSet).sort(), "Semua Supplier");
+  }
+  function fillSelect(id, values, placeholder){
+    var el = document.getElementById(id);
+    var current = el.value;
+    el.innerHTML = "";
+    var opt0 = document.createElement("option"); opt0.value=""; opt0.textContent = placeholder;
+    el.appendChild(opt0);
+    values.forEach(function(v){
+      var o = document.createElement("option"); o.value=v; o.textContent=v; el.appendChild(o);
+    });
+    if(values.indexOf(current) !== -1) el.value = current;
+  }
+
+  // ---------- Filtering ----------
+  function getCurrentFilterValues(){
+    return {
+      sales: document.getElementById("fSales").value,
+      toko: document.getElementById("fToko").value.trim().toLowerCase(),
+      supplier: document.getElementById("fSupplier").value,
+      from: document.getElementById("fFrom").value,
+      to: document.getElementById("fTo").value,
+      hideVoid: document.getElementById("fHideVoid").checked
+    };
+  }
+  // Row-level filtered rows (same filter criteria as the visit table, but
+  // applied per transaction line) — this is what feeds the pivot table.
+  function getFilteredRawRows(){
+    var f = getCurrentFilterValues();
+    return state.allRows.filter(function(r){
+      if(f.sales && r.namaSales !== f.sales) return false;
+      if(f.toko && (!r.namaCustomer || r.namaCustomer.toLowerCase().indexOf(f.toko) === -1)) return false;
+      if(f.supplier && r.namaSupplier !== f.supplier) return false;
+      if(f.from && r.tanggalKey < f.from) return false;
+      if(f.to && r.tanggalKey > f.to) return false;
+      if(f.hideVoid && VOID_STATUSES[r.status]) return false;
+      return true;
+    });
+  }
+
+  function applyFilters(){
+    var f = getCurrentFilterValues();
+    state.filtered = state.visits.filter(function(v){
+      if(f.sales && v.namaSales !== f.sales) return false;
+      if(f.toko && (!v.namaCustomer || v.namaCustomer.toLowerCase().indexOf(f.toko) === -1)) return false;
+      if(f.supplier && !v.suppliers[f.supplier]) return false;
+      if(f.from && v.tanggalKey < f.from) return false;
+      if(f.to && v.tanggalKey > f.to) return false;
+      if(f.hideVoid && v.itemCount > 0 && v.items.every(function(it){ return VOID_STATUSES[it.status]; })) return false;
+      return true;
+    });
+    state.filtered = sortVisits(state.filtered);
+    state.page = 0;
+    updateSortHeaderUI();
+    renderTable();
+    renderSummary();
+    if(state.activeTab === "pivot"){ renderPivot(); } else { pivotState.dirty = true; }
+  }
+
+  // ---------- Rendering ----------
+  function renderSummary(){
+    var visitsShown = state.filtered;
+    var stores = {}, salesAll = {}, omzet = 0;
+    visitsShown.forEach(function(v){
+      stores[v.namaCustomer||v.kdCust] = 1;
+      salesAll[v.namaSales] = 1;
+      omzet += v.totalOmzet;
+    });
+    document.getElementById("statVisits").textContent = visitsShown.length.toLocaleString("id-ID");
+    document.getElementById("statStores").textContent = Object.keys(stores).length.toLocaleString("id-ID");
+    document.getElementById("statSales").textContent = Object.keys(salesAll).length.toLocaleString("id-ID");
+    document.getElementById("statOmzet").innerHTML = fmtIDR(omzet);
+  }
+
+  function renderTable(){
+    var list = document.getElementById("visitList");
+    var pager = document.getElementById("pager");
+    list.innerHTML = "";
+
+    if(state.filtered.length === 0){
+      var hasAnyData = state.visits.length > 0;
+      list.innerHTML = '<div class="empty-state"><div class="big">' +
+        (hasAnyData ? "Tidak ada kunjungan yang cocok dengan filter." : "Belum ada data kunjungan.") +
+        '</div><div>' + (hasAnyData ? "Coba ubah atau reset filter di atas." : "Klik “Upload Data Hari Ini” untuk mulai mengisi manifest.") + '</div></div>';
+      pager.style.display = "none";
+      return;
+    }
+
+    var start = state.page * state.pageSize;
+    var pageItems = state.filtered.slice(start, start + state.pageSize);
+
+    pageItems.forEach(function(v){
+      var row = document.createElement("div");
+      row.className = "visit-row";
+      var suppliers = Object.keys(v.suppliers);
+      var suppLabel = suppliers.length <= 2 ? suppliers.join(", ") : (suppliers.slice(0,2).join(", ") + " +" + (suppliers.length-2));
+      row.innerHTML =
+        '<div class="col-date">' + fmtDateDisplay(v.tanggalKey) + '</div>' +
+        '<div class="col-sales">' + escapeHtml(v.namaSales||"-") + '</div>' +
+        '<div class="col-toko">' + escapeHtml(v.namaCustomer||"-") + '<span>' + escapeHtml(v.kdCust||"") + '</span></div>' +
+        '<div class="col-supp">' + escapeHtml(suppLabel) + '</div>' +
+        '<div class="col-num">' + v.itemCount + '</div>' +
+        '<div class="col-num">' + v.totalQty.toLocaleString("id-ID") + '</div>' +
+        '<div class="col-omzet">' + fmtIDR(v.totalOmzet) + '</div>' +
+        '<div class="caret' + (state.openKeys[v.key] ? ' open' : '') + '">▸</div>';
+      row.addEventListener("click", function(){
+        state.openKeys[v.key] = !state.openKeys[v.key];
+        renderTable();
+      });
+      list.appendChild(row);
+
+      if(state.openKeys[v.key]){
+        var panel = document.createElement("div");
+        panel.className = "detail-panel";
+        var itemsHtml = v.items.map(function(it){
+          var stampClass = it.status === "OK" ? "ok" : (it.status === "BATAL" ? "batal" : (it.status === "RETUR" ? "retur" : "coret"));
+          return '<div class="detail-item">' +
+            '<span class="diname">' + escapeHtml(it.namaBarang||"-") + '</span>' +
+            '<span class="disupp">' + escapeHtml(it.namaSupplier||"") + '</span>' +
+            '<span class="difill"></span>' +
+            '<span class="diqty">' + safeNum(it.qty) + ' ' + escapeHtml(it.satuan||"") + '</span>' +
+            '<span class="diamt">' + fmtIDR(it.subTotal) + '</span>' +
+            '<span class="distat"><span class="stamp ' + stampClass + '">' + escapeHtml(it.status||"-") + '</span></span>' +
+            '</div>';
+        }).join("");
+        panel.innerHTML = itemsHtml;
+        list.appendChild(panel);
+      }
+    });
+
+    var totalPages = Math.max(1, Math.ceil(state.filtered.length / state.pageSize));
+    pager.style.display = "flex";
+    document.getElementById("pagerInfo").textContent =
+      "Menampilkan " + (start+1) + "–" + Math.min(start+state.pageSize, state.filtered.length) + " dari " + state.filtered.length + " kunjungan";
+    document.getElementById("prevPage").disabled = state.page === 0;
+    document.getElementById("nextPage").disabled = state.page >= totalPages - 1;
+  }
+
+  // ---------- Pivot table ----------
+  function newAcc(){ return { sum:0, count:0, min:Infinity, max:-Infinity, distinct:null }; }
+  function updateAcc(acc, v){
+    acc.sum += v; acc.count += 1;
+    if(v < acc.min) acc.min = v;
+    if(v > acc.max) acc.max = v;
+  }
+  function updateDistinct(acc, label){
+    if(!acc.distinct) acc.distinct = new Set();
+    acc.distinct.add(label);
+  }
+  function mergeAcc(target, src){
+    target.sum += src.sum; target.count += src.count;
+    if(src.min < target.min) target.min = src.min;
+    if(src.max > target.max) target.max = src.max;
+    if(src.distinct){
+      if(!target.distinct) target.distinct = new Set();
+      src.distinct.forEach(function(v){ target.distinct.add(v); });
+    }
+  }
+  function finalizeAcc(acc, agg){
+    if(!acc || acc.count === 0) return 0;
+    if(agg === "sum") return acc.sum;
+    if(agg === "count") return acc.count;
+    if(agg === "countunique") return acc.distinct ? acc.distinct.size : 0;
+    if(agg === "avg") return acc.sum / acc.count;
+    if(agg === "min") return acc.min;
+    if(agg === "max") return acc.max;
+    return acc.sum;
+  }
+  function fmtPivotNum(val, valueDef, agg){
+    var meta = FIELD_META[valueDef.field] || {};
+    if(meta.currency) return fmtIDR(val);
+    if(agg === "avg") return val.toLocaleString("id-ID", { maximumFractionDigits:1 });
+    return Math.round(val).toLocaleString("id-ID");
+  }
+  function dimLabel(v, field){
+    if(v === null || v === undefined || v === "") return "(Kosong)";
+    if(field === "tanggalKey") return fmtDateDisplay(v);
+    return String(v);
+  }
+  function valueDefLabel(vd){
+    var aggMeta = PIVOT_AGG_OPTIONS.filter(function(a){ return a.key === vd.agg; })[0] || {};
+    return (aggMeta.label || vd.agg) + " of " + fieldLabel(vd.field);
+  }
+  function valueDefShort(vd){ return fieldLabel(vd.field); }
+
+  // ---------- Row-level filtering used only by the pivot (main filter bar + per-field selections) ----------
+  function getPivotFilteredRows(){
+    var rows = getFilteredRawRows();
+    var restrictions = pivotState.filterFields.concat(pivotState.rowFields).concat(pivotState.colFields)
+      .filter(function(f){ return f.selected !== null; });
+    if(restrictions.length === 0) return rows;
+    return rows.filter(function(r){
+      return restrictions.every(function(f){
+        var allowed = f.selected;
+        return allowed.indexOf(dimLabel(r[f.field], f.field)) !== -1;
+      });
+    });
+  }
+  function distinctValuesFor(field){
+    var rows = getFilteredRawRows();
+    var seen = {};
+    rows.forEach(function(r){ seen[dimLabel(r[field], field)] = 1; });
+    return Object.keys(seen).sort();
+  }
+  function findFieldEntry(field){
+    var zones = [
+      ["filters", pivotState.filterFields], ["rows", pivotState.rowFields],
+      ["cols", pivotState.colFields], ["values", pivotState.values]
+    ];
+    for(var i=0;i<zones.length;i++){
+      var list = zones[i][1];
+      for(var j=0;j<list.length;j++){ if(list[j].field === field) return { zone:zones[i][0], list:list, index:j, entry:list[j] }; }
+    }
+    return null;
+  }
+
+  // ---------- Field List panel ----------
+  function renderFieldList(){
+    var wrap = document.getElementById("pFieldListItems");
+    var q = (document.getElementById("pFieldSearch").value || "").toLowerCase();
+    wrap.innerHTML = "";
+    FIELD_ORDER.filter(function(f){ return fieldLabel(f).toLowerCase().indexOf(q) !== -1; }).forEach(function(field){
+      var meta = FIELD_META[field];
+      var present = !!findFieldEntry(field);
+      var item = document.createElement("div");
+      item.className = "pivot-field-item";
+      item.setAttribute("draggable", "true");
+      item.innerHTML = '<input type="checkbox" ' + (present ? "checked" : "") + '><span>' + escapeHtml(meta.label) + '</span>' +
+        (meta.numeric ? '<span class="fnum">#</span>' : "");
+      item.querySelector("input").addEventListener("click", function(e){
+        e.stopPropagation();
+        toggleFieldChecked(field, e.target.checked);
+      });
+      item.addEventListener("click", function(){
+        var cb = item.querySelector("input");
+        toggleFieldChecked(field, !cb.checked);
+      });
+      item.addEventListener("dragstart", function(e){
+        e.dataTransfer.setData("text/plain", JSON.stringify({ field: field, from: "fieldlist" }));
+        item.classList.add("dragging");
+      });
+      item.addEventListener("dragend", function(){ item.classList.remove("dragging"); });
+      wrap.appendChild(item);
+    });
+  }
+
+  function toggleFieldChecked(field, checked){
+    var existing = findFieldEntry(field);
+    if(checked && !existing){
+      addFieldToZone(field, FIELD_META[field].numeric ? "values" : "rows");
+    } else if(!checked && existing){
+      removeFieldFromZone(field);
+    }
+    afterPivotStructureChange();
+  }
+
+  function addFieldToZone(field, zone, atIndex){
+    removeFieldFromZone(field); // a field lives in at most one zone at a time
+    var entry;
+    if(zone === "values"){
+      entry = { field: field, agg: FIELD_META[field] && FIELD_META[field].numeric ? "sum" : "countunique" };
+    } else {
+      entry = { field: field, selected: null };
+    }
+    var list = zone === "filters" ? pivotState.filterFields : zone === "rows" ? pivotState.rowFields
+      : zone === "cols" ? pivotState.colFields : pivotState.values;
+    if(atIndex === undefined || atIndex === null || atIndex > list.length) list.push(entry);
+    else list.splice(atIndex, 0, entry);
+  }
+  function removeFieldFromZone(field){
+    [pivotState.filterFields, pivotState.rowFields, pivotState.colFields, pivotState.values].forEach(function(list){
+      for(var i=list.length-1;i>=0;i--){ if(list[i].field === field) list.splice(i,1); }
+    });
+  }
+  function afterPivotStructureChange(){
+    pivotState.collapsedPaths = {}; pivotState.autoCollapsedApplied = false;
+    renderFieldList(); renderPivotChips(); renderPivot();
+  }
+
+  // ---------- Zones: chips with drag, reorder, filter popover ----------
+  function renderPivotChips(){
+    renderZoneChips("filters", pivotState.filterFields, document.getElementById("pFilterChips"), "(kosong — tarik field ke sini untuk filter, tidak muncul di tabel)");
+    renderZoneChips("rows", pivotState.rowFields, document.getElementById("pRowChips"), "(kosong — tarik minimal 1 field)");
+    renderZoneChips("cols", pivotState.colFields, document.getElementById("pColChips"), "(opsional — tarik field ke sini)");
+    renderValueChips();
+  }
+
+  function renderZoneChips(zoneName, list, wrap, emptyText){
+    wrap.innerHTML = "";
+    if(list.length === 0){ wrap.innerHTML = '<span class="pivot-chip-empty">' + emptyText + '</span>'; return; }
+    list.forEach(function(entry, idx){
+      var chip = document.createElement("span");
+      chip.className = "pivot-chip";
+      chip.setAttribute("draggable", "true");
+      var filterActive = entry.selected !== null;
+      chip.innerHTML = '<span class="chip-label">' + escapeHtml(fieldLabel(entry.field)) + '</span>' +
+        '<button class="chip-filter' + (filterActive ? " active" : "") + '" data-act="filter" title="Filter nilai">▾</button>' +
+        '<button data-act="remove" title="Hapus">×</button>';
+      chip.querySelector('[data-act="filter"]').addEventListener("click", function(e){
+        e.stopPropagation();
+        openFieldPopover(entry, e.currentTarget);
+      });
+      chip.querySelector('[data-act="remove"]').addEventListener("click", function(e){
+        e.stopPropagation();
+        list.splice(idx,1);
+        afterPivotStructureChange();
+      });
+      wireChipDrag(chip, entry.field, zoneName, idx);
+      wrap.appendChild(chip);
+    });
+  }
+
+  function renderValueChips(){
+    var wrap = document.getElementById("pValChips");
+    wrap.innerHTML = "";
+    if(pivotState.values.length === 0){ wrap.innerHTML = '<span class="pivot-chip-empty">(kosong — tarik minimal 1 field numerik ke sini)</span>'; return; }
+    pivotState.values.forEach(function(vd, idx){
+      var meta = FIELD_META[vd.field] || { label: fieldLabel(vd.field) };
+      var chip = document.createElement("span");
+      chip.className = "pivot-chip";
+      chip.setAttribute("draggable", "true");
+      var aggSel = document.createElement("select");
+      var isCountField = vd.field === "__count__";
+      var availableAggs = isCountField ? PIVOT_AGG_OPTIONS.filter(function(a){ return a.key === "count"; })
+        : meta.numeric ? PIVOT_AGG_OPTIONS
+        : PIVOT_AGG_OPTIONS.filter(function(a){ return a.key === "count" || a.key === "countunique"; });
+      availableAggs.forEach(function(d){ aggSel.appendChild(new Option(d.label, d.key)); });
+      if(!availableAggs.some(function(a){ return a.key === vd.agg; })) vd.agg = availableAggs[0].key;
+      aggSel.value = vd.agg;
+      aggSel.disabled = isCountField;
+      aggSel.addEventListener("change", function(){ vd.agg = aggSel.value; renderPivot(); });
+      var label = document.createElement("span");
+      label.className = "chip-label";
+      label.textContent = fieldLabel(vd.field);
+      var rmBtn = document.createElement("button");
+      rmBtn.textContent = "×";
+      rmBtn.addEventListener("click", function(){ pivotState.values.splice(idx,1); afterPivotStructureChange(); });
+      chip.appendChild(label); chip.appendChild(aggSel); chip.appendChild(rmBtn);
+      wireChipDrag(chip, vd.field, "values", idx);
+      wrap.appendChild(chip);
+    });
+  }
+
+  function wireChipDrag(chip, field, zoneName, idx){
+    chip.addEventListener("dragstart", function(e){
+      e.dataTransfer.setData("text/plain", JSON.stringify({ field: field, from: zoneName, index: idx }));
+      chip.classList.add("dragging");
+    });
+    chip.addEventListener("dragend", function(){ chip.classList.remove("dragging"); });
+  }
+
+  function setupZoneDropTargets(){
+    [
+      ["zoneFilters","filters"], ["zoneRows","rows"], ["zoneCols","cols"], ["zoneValues","values"]
+    ].forEach(function(pair){
+      var el = document.getElementById(pair[0]);
+      var zoneName = pair[1];
+      el.addEventListener("dragover", function(e){ e.preventDefault(); el.classList.add("dragover"); });
+      el.addEventListener("dragleave", function(){ el.classList.remove("dragover"); });
+      el.addEventListener("drop", function(e){
+        e.preventDefault();
+        el.classList.remove("dragover");
+        var data;
+        try { data = JSON.parse(e.dataTransfer.getData("text/plain")); } catch(err){ return; }
+        if(!data || !data.field) return;
+        if(zoneName === "values" && !FIELD_META[data.field]){ return; }
+        addFieldToZone(data.field, zoneName);
+        afterPivotStructureChange();
+      });
+    });
+  }
+
+  // ---------- Per-field value-filter popover ----------
+  function openFieldPopover(entry, anchorEl){
+    activePopoverField = entry;
+    var pop = document.getElementById("fieldPopover");
+    var rect = anchorEl.getBoundingClientRect();
+    pop.style.top = (window.scrollY + rect.bottom + 6) + "px";
+    pop.style.left = (window.scrollX + rect.left - 180) + "px";
+    document.getElementById("fpSearch").value = "";
+    renderPopoverList(entry, "");
+    pop.classList.add("show");
+  }
+  function renderPopoverList(entry, q){
+    var values = distinctValuesFor(entry.field).filter(function(v){ return v.toLowerCase().indexOf(q.toLowerCase()) !== -1; });
+    var list = document.getElementById("fpList");
+    list.innerHTML = "";
+    values.forEach(function(v){
+      var checked = entry.selected === null || entry.selected.indexOf(v) !== -1;
+      var row = document.createElement("label");
+      row.className = "fp-item";
+      row.innerHTML = '<input type="checkbox" ' + (checked ? "checked" : "") + '><span>' + escapeHtml(v) + '</span>';
+      row.querySelector("input").addEventListener("change", function(e){
+        var allValues = distinctValuesFor(entry.field);
+        if(entry.selected === null) entry.selected = allValues.slice();
+        if(e.target.checked){
+          if(entry.selected.indexOf(v) === -1) entry.selected.push(v);
+        } else {
+          entry.selected = entry.selected.filter(function(x){ return x !== v; });
+        }
+        if(entry.selected.length === allValues.length) entry.selected = null;
+        renderPivotChips(); renderPivot();
+      });
+      list.appendChild(row);
+    });
+  }
+
+  // ---------- Recursive tree build & render ----------
+  // Resolve a raw row to a composite column key string across the given colFields (array of {field}).
+  function colKeyOf(row, colFields){
+    return colFields.map(function(f){ return dimLabel(row[f.field], f.field); }).join(" / ");
+  }
+
+  // Recursively group `rows` by the ordered `rowFieldKeys` (plain strings), computing per-node
+  // aggregates (overall, and per top-N column key when colFields is set) at every level so subtotal
+  // rows can be rendered for any collapsed/expanded state.
+  function buildPivotTree(rows, rowFieldKeys, values, colFields, topColSet){
+    var node = { rowsCount: rows.length };
+    node.accs = values.map(function(vd){
+      var acc = newAcc();
+      var getVal = (vd.field === "__count__" || !fieldIsNumeric(vd.field)) ? function(){ return 1; } : function(r){ return safeNum(r[vd.field]); };
+      var needsDistinct = vd.agg === "countunique" && vd.field !== "__count__";
+      rows.forEach(function(r){
+        updateAcc(acc, getVal(r));
+        if(needsDistinct) updateDistinct(acc, dimLabel(r[vd.field], vd.field));
+      });
+      return acc;
+    });
+    if(colFields.length){
+      node.colAccs = {};
+      rows.forEach(function(r){
+        var ck = colKeyOf(r, colFields);
+        var dest = topColSet[ck] ? ck : "Lainnya";
+        if(!node.colAccs[dest]) node.colAccs[dest] = values.map(function(){ return newAcc(); });
+        values.forEach(function(vd, i){
+          var v = (vd.field === "__count__" || !fieldIsNumeric(vd.field)) ? 1 : safeNum(r[vd.field]);
+          updateAcc(node.colAccs[dest][i], v);
+          if(vd.agg === "countunique" && vd.field !== "__count__") updateDistinct(node.colAccs[dest][i], dimLabel(r[vd.field], vd.field));
+        });
+      });
+    }
+    if(rowFieldKeys.length === 0){
+      node.isLeaf = true;
+      node.children = [];
+      return node;
+    }
+    var field = rowFieldKeys[0];
+    var groups = {};
+    rows.forEach(function(r){
+      var key = dimLabel(r[field], field);
+      if(!groups[key]) groups[key] = [];
+      groups[key].push(r);
+    });
+    var order = Object.keys(groups).sort();
+    var truncated = order.length > PIVOT_MAX_CHILDREN;
+    var shownOrder = truncated ? order.slice(0, PIVOT_MAX_CHILDREN) : order;
+    node.field = field;
+    node.childCountTotal = order.length;
+    node.childCountShown = shownOrder.length;
+    node.children = shownOrder.map(function(key){
+      var childNode = buildPivotTree(groups[key], rowFieldKeys.slice(1), values, colFields, topColSet);
+      childNode.key = key;
+      return childNode;
+    });
+    node.isLeaf = false;
+    return node;
+  }
+
+  function countLeaves(node){
+    if(node.isLeaf) return 1;
+    var n = 0;
+    node.children.forEach(function(c){ n += countLeaves(c); });
+    return Math.max(n, 1);
+  }
+
+  function computePivotRoot(rows){
+    var colFields = pivotState.colFields;
+    var topColSet = {};
+    var colKeysOrdered = [];
+    var totalColCount = 0;
+    if(colFields.length){
+      var primaryVd = pivotState.values[0] || { field:"subTotal", agg:"sum" };
+      var getVal = (primaryVd.field === "__count__" || !fieldIsNumeric(primaryVd.field)) ? function(){ return 1; } : function(r){ return safeNum(r[primaryVd.field]); };
+      var colTotals = {};
+      rows.forEach(function(r){
+        var ck = colKeyOf(r, colFields);
+        if(!colTotals[ck]) colTotals[ck] = newAcc();
+        updateAcc(colTotals[ck], getVal(r));
+      });
+      var allColKeys = Object.keys(colTotals);
+      totalColCount = allColKeys.length;
+      allColKeys.sort(function(a,b){ return finalizeAcc(colTotals[b],primaryVd.agg) - finalizeAcc(colTotals[a],primaryVd.agg); });
+      var topKeys = allColKeys.slice(0, PIVOT_MAX_COLS);
+      topKeys.forEach(function(k){ topColSet[k]=1; });
+      colKeysOrdered = topKeys.slice();
+      if(allColKeys.length > PIVOT_MAX_COLS) colKeysOrdered.push("Lainnya");
+    }
+    var rowFieldKeys = pivotState.rowFields.map(function(f){ return f.field; });
+    var tree = buildPivotTree(rows, rowFieldKeys, pivotState.values, colFields, topColSet);
+    return { tree: tree, colKeys: colKeysOrdered, totalColCount: totalColCount };
+  }
+
+  function pivotPathKey(pathArr){ return pathArr.join(PATH_SEP); }
+
+  function renderPivotNodeRows(node, pathArr, depth, columnPlan, out){
+    var pathKey = pivotPathKey(pathArr);
+    var label = pathArr.length ? pathArr[pathArr.length-1] : "";
+    var indentStyle = 'style="padding-left:' + (14 + depth*20) + 'px"';
+
+    if(node.isLeaf){
+      var cells = columnPlan.map(function(cp){
+        var val = cp.type === "total" ? finalizeAcc(node.accs[cp.valueIndex], cp.agg)
+          : (node.colAccs && node.colAccs[cp.colKey] ? finalizeAcc(node.colAccs[cp.colKey][cp.valueIndex], cp.agg) : null);
+        return '<td>' + (val === null ? "—" : fmtPivotNum(val, pivotState.values[cp.valueIndex], cp.agg)) + '</td>';
+      }).join("");
+      out.push('<tr class="leaf-row"><td ' + indentStyle + '>' + escapeHtml(label) + '</td>' + cells + '</tr>');
+      return;
+    }
+
+    var collapsed = !!pivotState.collapsedPaths[pathKey];
+    var toggleChar = collapsed ? "+" : "\u2212";
+
+    if(collapsed){
+      var cellsC = columnPlan.map(function(cp){
+        var val = cp.type === "total" ? finalizeAcc(node.accs[cp.valueIndex], cp.agg)
+          : (node.colAccs && node.colAccs[cp.colKey] ? finalizeAcc(node.colAccs[cp.colKey][cp.valueIndex], cp.agg) : null);
+        return '<td>' + (val === null ? "—" : fmtPivotNum(val, pivotState.values[cp.valueIndex], cp.agg)) + '</td>';
+      }).join("");
+      out.push('<tr><td ' + indentStyle + '><span class="pivot-toggle" data-path="' + escapeHtml(pathKey) + '">' + toggleChar + '</span>' +
+        escapeHtml(label) + '</td>' + cellsC + '</tr>');
+      return;
+    }
+
+    // Expanded: header row (label only), then children, then subtotal row.
+    var blankCells = columnPlan.map(function(){ return "<td></td>"; }).join("");
+    out.push('<tr><td ' + indentStyle + '><span class="pivot-toggle" data-path="' + escapeHtml(pathKey) + '">' + toggleChar + '</span>' +
+      escapeHtml(label) + '</td>' + blankCells + '</tr>');
+
+    node.children.forEach(function(child){
+      renderPivotNodeRows(child, pathArr.concat(child.key), depth+1, columnPlan, out);
+    });
+
+    if(node.childCountTotal > node.childCountShown){
+      out.push('<tr class="leaf-row"><td style="padding-left:' + (14+(depth+1)*20) + 'px;color:var(--bad);">… ' +
+        (node.childCountTotal - node.childCountShown) + ' lainnya tidak ditampilkan (batas ' + PIVOT_MAX_CHILDREN + ' per level)</td>' +
+        columnPlan.map(function(){return "<td></td>";}).join("") + '</tr>');
+    }
+
+    var totalCells = columnPlan.map(function(cp){
+      var val = cp.type === "total" ? finalizeAcc(node.accs[cp.valueIndex], cp.agg)
+        : (node.colAccs && node.colAccs[cp.colKey] ? finalizeAcc(node.colAccs[cp.colKey][cp.valueIndex], cp.agg) : null);
+      return '<td>' + (val === null ? "—" : fmtPivotNum(val, pivotState.values[cp.valueIndex], cp.agg)) + '</td>';
+    }).join("");
+    out.push('<tr class="total-row"><td style="padding-left:' + (14+depth*20) + 'px;">' + escapeHtml(label) + ' Total</td>' + totalCells + '</tr>');
+  }
+
+  // Collapse every non-leaf node at every nesting level (recursively) — this is
+  // the default view: drill down by clicking "+" rather than seeing everything
+  // expanded at once.
+  function collapseAllNodes(tree){
+    function walk(node, pathArr){
+      if(node.isLeaf) return;
+      pivotState.collapsedPaths[pivotPathKey(pathArr)] = true;
+      node.children.forEach(function(child){ walk(child, pathArr.concat(child.key)); });
+    }
+    tree.children.forEach(function(child){ walk(child, [child.key]); });
+  }
+  function applyDefaultCollapse(tree){
+    if(pivotState.autoCollapsedApplied) return;
+    collapseAllNodes(tree);
+    pivotState.autoCollapsedApplied = true;
+  }
+
+  function renderPivot(){
+    var rows = getPivotFilteredRows();
+    var container = document.getElementById("pivotTableContainer");
+    if(pivotState.rowFields.length === 0 || pivotState.values.length === 0){
+      container.innerHTML = '<div class="empty-state"><div class="big">Lengkapi konfigurasi pivot dulu.</div><div>Tarik minimal 1 field ke "Baris" dan 1 field numerik ke "Nilai".</div></div>';
+      pivotState.dirty = false;
+      return;
+    }
+    if(rows.length === 0){
+      container.innerHTML = '<div class="empty-state"><div class="big">Tidak ada data untuk dipivot.</div><div>Coba ubah filter di atas, atau upload data dulu.</div></div>';
+      pivotState.dirty = false;
+      return;
+    }
+
+    var p = computePivotRoot(rows);
+    applyDefaultCollapse(p.tree);
+
+    // Build the flat column plan: for each colKey x valueDef when colFields is set,
+    // plus a "Total" group of columns (one per valueDef) which is the only set of
+    // columns rendered when colFields is empty.
+    var columnPlan = [];
+    var headerCells = [];
+    if(pivotState.colFields.length){
+      p.colKeys.forEach(function(ck){
+        pivotState.values.forEach(function(vd, vi){
+          columnPlan.push({ type:"data", colKey:ck, valueIndex:vi, agg:vd.agg });
+          headerCells.push('<th>' + escapeHtml(ck) + (pivotState.values.length>1 ? ' — ' + escapeHtml(valueDefShort(vd)) : '') + '</th>');
+        });
+      });
+      pivotState.values.forEach(function(vd, vi){
+        columnPlan.push({ type:"total", valueIndex:vi, agg:vd.agg });
+        headerCells.push('<th class="rowtotal">Total' + (pivotState.values.length>1 ? ' ' + escapeHtml(valueDefShort(vd)) : '') + '</th>');
+      });
+    } else {
+      pivotState.values.forEach(function(vd, vi){
+        columnPlan.push({ type:"total", valueIndex:vi, agg:vd.agg });
+        headerCells.push('<th>' + escapeHtml(valueDefLabel(vd)) + '</th>');
+      });
+    }
+
+    var rowFieldLabel = fieldLabel(pivotState.rowFields[0].field);
+    var html = '<table class="pivot-table"><thead><tr><th>' + escapeHtml(rowFieldLabel) + '</th>' + headerCells.join("") + '</tr></thead><tbody>';
+
+    var out = [];
+    p.tree.children.forEach(function(child){
+      renderPivotNodeRows(child, [child.key], 0, columnPlan, out);
+    });
+    html += out.join("");
+
+    var grandCells = columnPlan.map(function(cp){
+      var val = cp.type === "total" ? finalizeAcc(p.tree.accs[cp.valueIndex], cp.agg)
+        : (p.tree.colAccs && p.tree.colAccs[cp.colKey] ? finalizeAcc(p.tree.colAccs[cp.colKey][cp.valueIndex], cp.agg) : null);
+      return '<td>' + (val === null ? "—" : fmtPivotNum(val, pivotState.values[cp.valueIndex], cp.agg)) + '</td>';
+    }).join("");
+    html += '<tr class="grand-total-row"><td>GRAND TOTAL</td>' + grandCells + '</tr>';
+    html += '</tbody></table>';
+
+    var notes = [];
+    if(pivotState.colFields.length && p.totalColCount > PIVOT_MAX_COLS){
+      notes.push('Kolom dibatasi ke top ' + PIVOT_MAX_COLS + ' (sisanya digabung ke "Lainnya").');
+    }
+
+    container.innerHTML = html + (notes.length ? '<div class="pivot-note">ℹ ' + notes.join(' ') + '</div>' : '');
+    container.querySelectorAll(".pivot-toggle").forEach(function(el){
+      el.addEventListener("click", function(e){
+        e.stopPropagation();
+        var path = el.getAttribute("data-path");
+        pivotState.collapsedPaths[path] = !pivotState.collapsedPaths[path];
+        renderPivot();
+      });
+    });
+    pivotState.dirty = false;
+  }
+
+  // ---------- Upload / parsing ----------
+  function parseWorkbook(arrayBuffer){
+    var wb = XLSX.read(arrayBuffer, { type:"array", cellDates:true });
+    var sheetName = wb.SheetNames[0];
+    var ws = wb.Sheets[sheetName];
+    var rows2d = XLSX.utils.sheet_to_json(ws, { header:1, raw:true, defval:null });
+    if(rows2d.length < 2) return {};
+
+    var headerRow = rows2d[0].map(normHeader);
+    var colIndex = {};
+    headerRow.forEach(function(h, i){
+      if(HEADER_MAP[h]) colIndex[HEADER_MAP[h]] = i;
+    });
+
+    var grouped = {};
+    for(var r=1; r<rows2d.length; r++){
+      var raw = rows2d[r];
+      if(!raw || raw.length === 0) continue;
+      var tanggalVal = colIndex.tanggal != null ? raw[colIndex.tanggal] : null;
+      var dateObj = tanggalVal instanceof Date ? tanggalVal : (typeof tanggalVal === "number" ? XLSX.SSF.parse_date_code(tanggalVal) : null);
+      var dKey;
+      if(tanggalVal instanceof Date){ dKey = toDateKey(tanggalVal); }
+      else if(dateObj && dateObj.y){ dKey = dateObj.y + "-" + ("0"+dateObj.m).slice(-2) + "-" + ("0"+dateObj.d).slice(-2); }
+      else { continue; }
+      if(!dKey) continue;
+
+      var obj = { tanggalKey: dKey };
+      Object.keys(HEADER_MAP).forEach(function(h){
+        var field = HEADER_MAP[h];
+        var idx = colIndex[field];
+        obj[field] = idx != null ? raw[idx] : null;
+      });
+      obj.namaSales = obj.namaSales || "(Tanpa Nama)";
+      obj.namaCustomer = obj.namaCustomer || "(Tanpa Nama Toko)";
+      obj.namaSupplier = obj.namaSupplier || "—";
+      obj.status = (obj.status || "OK").toString().trim().toUpperCase();
+
+      if(!grouped[dKey]) grouped[dKey] = [];
+      grouped[dKey].push(obj);
+    }
+    return grouped;
+  }
+
+  var lastUploadContext = null; // kept in memory so "Coba Lagi" can retry without re-picking the file
+
+  function saveOneDate(dateKey, rows, onProgress){
+    return sbDeleteByDate(dateKey).then(function(){
+      var batches = [];
+      for(var i=0; i<rows.length; i+=INSERT_BATCH_SIZE){ batches.push(rows.slice(i, i+INSERT_BATCH_SIZE)); }
+      if(batches.length === 0) batches = [[]];
+      var done = 0;
+      var chain = Promise.resolve();
+      var failed = null;
+      batches.forEach(function(batch){
+        chain = chain.then(function(){
+          if(failed) return;
+          if(batch.length === 0) return;
+          var payload = batch.map(appRowToDb);
+          return sbInsertBatch(payload).then(function(){
+            done += batch.length;
+            if(onProgress) onProgress(done, rows.length);
+          }).catch(function(err){
+            failed = err && err.message ? err.message : String(err);
+          });
+        });
+      });
+      return chain.then(function(){
+        return failed ? { ok:false, error:failed } : { ok:true };
+      });
+    }).catch(function(err){
+      return { ok:false, error: err && err.message ? err.message : String(err) };
+    });
+  }
+
+  function runUploadChain(dateKeys, grouped, fill, text, resultList, suspiciousHtml){
+    var results = [];
+    var chain = Promise.resolve();
+    dateKeys.forEach(function(dk, i){
+      chain = chain.then(function(){
+        text.textContent = "Menyimpan data " + fmtDateDisplay(dk) + " (tanggal " + (i+1) + "/" + dateKeys.length + ")...";
+        return saveOneDate(dk, grouped[dk], function(done, total){
+          text.textContent = "Menyimpan data " + fmtDateDisplay(dk) + ": " + done + "/" + total + " baris (tanggal " + (i+1) + "/" + dateKeys.length + ")";
+        }).then(function(res){
+          results.push({ date:dk, count:grouped[dk].length, ok:res.ok, error:res.error });
+        }).then(function(){
+          fill.style.width = (10 + Math.round(((i+1)/dateKeys.length)*80)) + "%";
+        });
+      });
+    });
+
+    return chain.then(function(){
+      var failed = results.filter(function(r){ return !r.ok; });
+      fill.style.width = "100%";
+      resultList.style.display = "block";
+      resultList.innerHTML = (suspiciousHtml||"") + results.map(function(r){
+        if(r.ok) return "<div>" + fmtDateDisplay(r.date) + " — " + r.count + " baris — tersimpan ke database</div>";
+        return "<div style='color:#B5443A'>" + fmtDateDisplay(r.date) + " — GAGAL disimpan (" + r.error + ")</div>";
+      }).join("");
+
+      var retryBtn = document.getElementById("retryFailedBtn");
+      lastUploadContext = { dateKeys: failed.map(function(r){ return r.date; }), grouped: grouped };
+      if(failed.length > 0){
+        text.textContent = failed.length + " dari " + results.length + " tanggal gagal disimpan.";
+        retryBtn.style.display = "inline-flex";
+      } else {
+        retryBtn.style.display = "none";
+        text.textContent = "Selesai. Memuat ulang data...";
+      }
+      return loadAll().then(function(){
+        if(failed.length === 0) text.textContent = "Data website sudah diperbarui.";
+      });
+    }).catch(function(err){
+      text.textContent = "Terjadi kesalahan saat menyimpan: " + (err && err.message ? err.message : err);
+    });
+  }
+
+  function retryFailedUpload(){
+    if(!lastUploadContext || lastUploadContext.dateKeys.length === 0) return;
+    var fill = document.getElementById("progressFill");
+    var text = document.getElementById("progressText");
+    var resultList = document.getElementById("resultList");
+    document.getElementById("progressWrap").style.display = "block";
+    fill.style.width = "10%";
+    var ctx = lastUploadContext;
+    runUploadChain(ctx.dateKeys, ctx.grouped, fill, text, resultList);
+  }
+
+  function handleFile(file){
+    if(!file) return;
+    var progressWrap = document.getElementById("progressWrap");
+    var resultList = document.getElementById("resultList");
+    var fill = document.getElementById("progressFill");
+    var text = document.getElementById("progressText");
+    progressWrap.style.display = "block";
+    resultList.style.display = "none";
+    fill.style.width = "5%";
+    text.textContent = "Membaca file " + file.name + "...";
+
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var grouped;
+      try {
+        grouped = parseWorkbook(e.target.result);
+      } catch(err){
+        text.textContent = "Gagal membaca file: " + err.message;
+        fill.style.width = "0%";
+        return;
+      }
+      var dateKeys = Object.keys(grouped).sort();
+      if(dateKeys.length === 0){
+        text.textContent = "Tidak ditemukan baris data yang valid (cek kolom TANGGAL).";
+        fill.style.width = "0%";
+        return;
+      }
+
+      // Sanity check: flag any date whose row count looks like a stray/typo
+      // entry (far smaller than the rest) so it's visible before saving, not after.
+      var counts = dateKeys.map(function(k){ return grouped[k].length; });
+      var maxCount = Math.max.apply(null, counts);
+      var suspicious = dateKeys.filter(function(k){ return grouped[k].length < maxCount * 0.05; });
+      var suspiciousHtml = "";
+      if(suspicious.length > 0){
+        suspiciousHtml = "<div style='color:#B8862A'>Perhatian: " + suspicious.map(function(k){
+          return fmtDateDisplay(k) + " cuma " + grouped[k].length + " baris (jauh lebih sedikit dari tanggal lain) — cek lagi apakah ini tanggal yang benar di file sumbernya, bisa jadi baris nyasar/typo.";
+        }).join("</div><div style='color:#B8862A'>") + "</div>";
+        resultList.style.display = "block";
+        resultList.innerHTML = suspiciousHtml;
+      }
+
+      fill.style.width = "10%";
+      text.textContent = "Mengecek koneksi ke database...";
+      checkConnection().then(function(){
+        text.textContent = "Menyimpan " + dateKeys.length + " tanggal ke database...";
+        runUploadChain(dateKeys, grouped, fill, text, resultList, suspiciousHtml);
+      }).catch(function(err){
+        fill.style.width = "0%";
+        resultList.style.display = "block";
+        resultList.innerHTML = (suspiciousHtml||"") + "<div style='color:#B5443A'>" + (err && err.message ? err.message : err) + "</div>";
+        text.textContent = "Upload dibatalkan — koneksi database bermasalah (lihat detail di bawah).";
+      });
+    };
+    reader.onerror = function(){
+      text.textContent = "Gagal membaca file.";
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  // ---------- Event wiring ----------
+  document.getElementById("openUploadBtn").addEventListener("click", function(){
+    document.getElementById("uploadOverlay").classList.add("show");
+    document.getElementById("progressWrap").style.display = "none";
+    document.getElementById("resultList").style.display = "none";
+    document.getElementById("retryFailedBtn").style.display = "none";
+    document.getElementById("fileNameLabel").textContent = "";
+    lastUploadContext = null;
+  });
+  document.getElementById("cancelUploadBtn").addEventListener("click", function(){
+    document.getElementById("uploadOverlay").classList.remove("show");
+  });
+  document.getElementById("retryFailedBtn").addEventListener("click", retryFailedUpload);
+  document.getElementById("resetAllBtn").addEventListener("click", function(){
+    if(!confirm("PERINGATAN: ini akan MENGHAPUS SEMUA data kunjungan di database, untuk SELURUH kantor. Lanjut hapus semua?")) return;
+    if(!confirm("Konfirmasi sekali lagi — benar-benar hapus SEMUA data tersimpan sekarang?")) return;
+    var fill = document.getElementById("progressFill");
+    var text = document.getElementById("progressText");
+    document.getElementById("progressWrap").style.display = "block";
+    document.getElementById("resultList").style.display = "none";
+    document.getElementById("retryFailedBtn").style.display = "none";
+    fill.style.width = "30%";
+    text.textContent = "Menghapus semua data dari database...";
+    sbDeleteAll().then(function(){
+      fill.style.width = "100%";
+      text.textContent = "Selesai. Semua data dihapus. Silakan upload file kamu lagi.";
+      return loadAll();
+    }).catch(function(err){
+      text.textContent = "Gagal menghapus: " + (err && err.message ? err.message : err);
+    });
+  });
+  document.getElementById("uploadOverlay").addEventListener("click", function(e){
+    if(e.target === this) this.classList.remove("show");
+  });
+  var dropZone = document.getElementById("dropZone");
+  var fileInput = document.getElementById("fileInput");
+  dropZone.addEventListener("click", function(){ fileInput.click(); });
+  fileInput.addEventListener("change", function(){
+    if(fileInput.files[0]){
+      document.getElementById("fileNameLabel").textContent = fileInput.files[0].name;
+      handleFile(fileInput.files[0]);
+    }
+  });
+  dropZone.addEventListener("dragover", function(e){ e.preventDefault(); dropZone.classList.add("drag"); });
+  dropZone.addEventListener("dragleave", function(){ dropZone.classList.remove("drag"); });
+  dropZone.addEventListener("drop", function(e){
+    e.preventDefault(); dropZone.classList.remove("drag");
+    var f = e.dataTransfer.files[0];
+    if(f){ document.getElementById("fileNameLabel").textContent = f.name; handleFile(f); }
+  });
+
+  ["fSales","fToko","fSupplier","fFrom","fTo","fHideVoid"].forEach(function(id){
+    document.getElementById(id).addEventListener("input", applyFilters);
+    document.getElementById(id).addEventListener("change", applyFilters);
+  });
+  document.getElementById("resetFilters").addEventListener("click", function(){
+    document.getElementById("fSales").value = "";
+    document.getElementById("fToko").value = "";
+    document.getElementById("fSupplier").value = "";
+    document.getElementById("fFrom").value = "";
+    document.getElementById("fTo").value = "";
+    document.getElementById("fHideVoid").checked = false;
+    applyFilters();
+  });
+  document.getElementById("prevPage").addEventListener("click", function(){
+    if(state.page > 0){ state.page--; renderTable(); }
+  });
+  document.getElementById("nextPage").addEventListener("click", function(){
+    var totalPages = Math.ceil(state.filtered.length / state.pageSize);
+    if(state.page < totalPages - 1){ state.page++; renderTable(); }
+  });
+
+  document.querySelectorAll(".sheet-head .sortable").forEach(function(el){
+    el.addEventListener("click", function(){
+      var col = el.getAttribute("data-col");
+      if(state.sortCol === col){
+        state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+      } else {
+        state.sortCol = col;
+        state.sortDir = SORT_COLUMNS[col].defaultDir;
+      }
+      applyFilters();
+    });
+  });
+
+  // ---------- Tabs & Pivot wiring ----------
+  document.getElementById("tabVisits").addEventListener("click", function(){
+    state.activeTab = "visits";
+    document.getElementById("tabVisits").classList.add("active");
+    document.getElementById("tabPivot").classList.remove("active");
+    document.getElementById("visitsView").style.display = "";
+    document.getElementById("pivotView").style.display = "none";
+  });
+  document.getElementById("tabPivot").addEventListener("click", function(){
+    state.activeTab = "pivot";
+    document.getElementById("tabPivot").classList.add("active");
+    document.getElementById("tabVisits").classList.remove("active");
+    document.getElementById("pivotView").style.display = "";
+    document.getElementById("visitsView").style.display = "none";
+    if(pivotState.dirty) renderPivot();
+  });
+  renderFieldList();
+  renderPivotChips();
+  setupZoneDropTargets();
+  document.getElementById("pFieldSearch").addEventListener("input", renderFieldList);
+  document.getElementById("pAddCountBtn").addEventListener("click", function(){
+    pivotState.values.push({ field:"__count__", agg:"count" });
+    afterPivotStructureChange();
+  });
+  document.getElementById("pExpandAll").addEventListener("click", function(){
+    pivotState.collapsedPaths = {};
+    pivotState.autoCollapsedApplied = true; // user explicitly asked to expand — don't re-auto-collapse
+    renderPivot();
+  });
+  document.getElementById("pCollapseAll").addEventListener("click", function(){
+    var rows = getPivotFilteredRows();
+    if(rows.length === 0) return;
+    var p = computePivotRoot(rows);
+    collapseAllNodes(p.tree);
+    pivotState.autoCollapsedApplied = true;
+    renderPivot();
+  });
+
+  // Field-value filter popover: search box, select-all/none, close-on-outside-click.
+  document.getElementById("fpSearch").addEventListener("input", function(){
+    if(activePopoverField) renderPopoverList(activePopoverField, this.value);
+  });
+  document.getElementById("fpSelectAll").addEventListener("click", function(){
+    if(!activePopoverField) return;
+    activePopoverField.selected = null;
+    renderPopoverList(activePopoverField, document.getElementById("fpSearch").value);
+    renderPivotChips(); renderPivot();
+  });
+  document.getElementById("fpSelectNone").addEventListener("click", function(){
+    if(!activePopoverField) return;
+    activePopoverField.selected = [];
+    renderPopoverList(activePopoverField, document.getElementById("fpSearch").value);
+    renderPivotChips(); renderPivot();
+  });
+  document.getElementById("fpClose").addEventListener("click", function(){
+    document.getElementById("fieldPopover").classList.remove("show");
+    activePopoverField = null;
+  });
+  document.addEventListener("click", function(e){
+    var pop = document.getElementById("fieldPopover");
+    if(!pop.classList.contains("show")) return;
+    if(pop.contains(e.target)) return;
+    if(e.target.getAttribute && e.target.getAttribute("data-act") === "filter") return;
+    pop.classList.remove("show");
+    activePopoverField = null;
+  });
+
+  // ---------- Init ----------
+  loadAll();
+})();
+</script>
+</body>
+</html>
